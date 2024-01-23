@@ -4,7 +4,6 @@ from collections import defaultdict
 from ipv8.community import CommunitySettings
 from ipv8.messaging.payload_dataclass import overwrite_dataclass
 from dataclasses import dataclass
-from hashlib import sha256
 
 from ipv8.types import Peer
 
@@ -42,7 +41,6 @@ class BlockchainNode(Blockchain):
         if self.node_id % 2 == 0:
             #  Run client
             self.start_client()
-            self.check_client()
         else:
             # Run validator
             self.start_validator()
@@ -89,7 +87,6 @@ class BlockchainNode(Blockchain):
             print(self.balances)
             self.stop()
 
-
     @message_wrapper(Transaction)
     async def on_transaction(self, peer: Peer, payload: Transaction) -> None:
 
@@ -101,13 +98,3 @@ class BlockchainNode(Blockchain):
         # Gossip to other nodes
         for peer in [i for i in self.get_peers() if self.node_id_from_peer(i) % 2 == 1]:
             self.ez_send(peer, payload)
-
-
-@dataclass(msg_id=2)
-
-class Blocks:
-        nonce = nonce
-        prevHash = prevHash
-        hash = sha256()
-        transactions = [Transaction]
-
