@@ -23,7 +23,6 @@ if __name__ == '__main__':
         baseport = 9090
         connections = {}
 
-        # Create a ring topology
         for i in range(args.num_nodes):
             n = copy.deepcopy(node)
             n['ports'] = [f'{baseport + i}:{baseport + i}']
@@ -33,7 +32,13 @@ if __name__ == '__main__':
             n['environment']['ALGORITHM'] = args.algorithm
             nodes[f'node{i}'] = n
 
-            connections[i] = [j for j in range(args.num_nodes) if j != i]
+            # Create a ring topology
+            if args.algorithm == "election":
+                connections[i] = [(i+1) % args.num_nodes, (i-1) % args.num_nodes]
+
+            # Create a fully connected topology
+            if args.algorithm == "blockchain":
+                connections[i] = [j for j in range(args.num_nodes) if j != i]
 
         content['services'] = nodes
 
