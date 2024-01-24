@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 
 from ipv8.types import Peer
-
+from datetime import datetime
 from da_types import Blockchain, message_wrapper
 
 # We are using a custom dataclass implementation.
@@ -21,7 +21,7 @@ class Transaction:
     sender: int
     receiver: int
     amount: int
-    nonce: int = 1
+    idx: int = 1
 
 
 class BlockchainNode(Blockchain):
@@ -39,16 +39,15 @@ class BlockchainNode(Blockchain):
         self.add_message_handler(Transaction, self.on_transaction)
 
     def on_start(self):
-        if self.node_id % 2 == 0:
+        if self.node_id < 5:
             #  Run client
             self.start_client()
-            self.check_client()
         else:
             # Run validator
             self.start_validator()
 
     def create_transaction(self):
-        peer = random.choice([i for i in self.get_peers() if self.node_id_from_peer(i) % 2 == 1])
+        peer = random.choice([i for i in self.get_peers() if self.node_id_from_peer(i) > 4])
         peer_id = self.node_id_from_peer(peer)
 
         tx = Transaction(self.node_id,
@@ -56,7 +55,7 @@ class BlockchainNode(Blockchain):
                          10,
                          self.counter)
         self.counter += 1
-        print(f'[Node {self.node_id}] Sending transaction {tx.nonce} to {self.node_id_from_peer(peer)}')
+        print(f'[Node {self.node_id}] Sending transaction {tx.idx} to {self.node_id_from_peer(peer)} at [time {datetime.now()}]')
         self.ez_send(peer, tx)
 
         if self.counter > self.max_messages:
@@ -94,20 +93,20 @@ class BlockchainNode(Blockchain):
     async def on_transaction(self, peer: Peer, payload: Transaction) -> None:
 
         # Add to pending transactions
-        if (payload.sender, payload.nonce) not in [(tx.sender, tx.nonce) for tx in self.finalized_txs] and (
-        payload.sender, payload.nonce) not in [(tx.sender, tx.nonce) for tx in self.pending_txs]:
+        if (payload.sender, payload.idx) not in [(tx.sender, tx.idx) for tx in self.finalized_txs] and (
+        payload.sender, payload.idx) not in [(tx.sender, tx.idx) for tx in self.pending_txs]:
             self.pending_txs.append(payload)
 
         # Gossip to other nodes
-        for peer in [i for i in self.get_peers() if self.node_id_from_peer(i) % 2 == 1]:
+        for peer in [i for i in self.get_peers()]:
             self.ez_send(peer, payload)
 
 
-@dataclass(msg_id=2)
-
-class Blocks:
-        nonce = nonce
-        prevHash = prevHash
-        hash = sha256()
-        transactions = [Transaction]
+# @dataclass(msg_id=2)
+#
+# class Blocks:
+#         nonce = nonce
+#         prevHash = prevHash
+#         hash = sha256()
+#         transactions = [Transaction]
 

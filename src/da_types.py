@@ -8,6 +8,7 @@ from ipv8.community import Community, CommunitySettings
 from ipv8.lazy_community import lazy_wrapper
 from ipv8.messaging.serialization import Payload
 from ipv8.types import Peer, LazyWrappedHandler, MessageHandlerFunction
+from datetime import datetime
 
 DataclassPayload = typing.TypeVar('DataclassPayload')
 AnyPayload = typing.Union[Payload, DataclassPayload]
@@ -61,7 +62,7 @@ class Blockchain(Community):
             if not valid:
                 return
             self.cancel_pending_task("ensure_nodes_connected")
-            print(f'[Node {self.node_id}] Starting')
+            print(f'[Node {self.node_id}] Starting at [time {datetime.now()}]')
             self.register_anonymous_task(
                 "delayed_start", self.on_start, delay=self.on_start_delay
             )
@@ -76,7 +77,7 @@ class Blockchain(Community):
     def stop(self, delay: int = 0):
 
         async def delayed_stop():
-            print(f"[Node {self.node_id}] Stopping algorithm")
+            print(f"[Node {self.node_id}] Stopping algorithm at [time {datetime.now()}]")
             self.event.set()
 
         self.register_anonymous_task('delayed_stop', delayed_stop, delay=delay)

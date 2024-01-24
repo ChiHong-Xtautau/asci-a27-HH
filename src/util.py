@@ -8,6 +8,7 @@ if __name__ == '__main__':
         description='Scale the number of nodes',
         epilog='Designed for A27 Fundamentals and Design of Blockchain-based Systems')
     parser.add_argument('num_nodes', type=int)
+    parser.add_argument('gossip_degree', type=int)
     parser.add_argument('topology_file', type=str, nargs='?', default='topologies/ring.yaml')
     parser.add_argument('algorithm', type=str, nargs='?', default='echo')
     parser.add_argument('template_file', type=str, nargs='?', default='docker-compose.template.yml')
@@ -38,8 +39,17 @@ if __name__ == '__main__':
 
             # Create a fully connected topology
             if args.algorithm == "blockchain":
-                connections[i] = [j for j in range(args.num_nodes) if j != i]
-
+                if i < 5:
+                    connections[i] = [j for j in range(args.num_nodes) if j != i]
+                else:
+                    if args.gossip_degree == 4:
+                        connections[i] = [j for j in range(args.num_nodes) if j != i]
+                    elif args.gossip_degree == 1:
+                        connections[i] = [(i+5)%args.num_nodes]
+                    elif args.gossip_degree == 2:
+                        connections[i] = [(i-1) % 5 +5, (i+1) % 5 +5]
+                    elif args.gossip_degree == 3:
+                        connections[i] = [(i-1) % 5 +5, (i+1) % 5 +5, (i+2) % 5 +5]
         content['services'] = nodes
 
         with open('docker-compose.yml', 'w') as f2:
