@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from ipv8.messaging.serialization import default_serializer
 from ipv8.types import Peer
 
-from da_types import Blockchain, message_wrapper
+from ..da_types import Blockchain, message_wrapper
 
 # We are using a custom dataclass implementation.
 dataclass = overwrite_dataclass(dataclass)
@@ -34,6 +34,8 @@ class Block:
     prev_block_hash: bytes
     timestamp: int
     transactions: [Transaction]
+    pos_nonce: int
+    validator_id: int
 
 
 @dataclass(msg_id=3)
@@ -50,7 +52,6 @@ class BlockchainNode(Blockchain):
     def __init__(self, settings: CommunitySettings) -> None:
         super().__init__(settings)
         self.counter = 1
-
         self.pending_txs = []
         self.finalized_txs = []
 
@@ -125,6 +126,13 @@ class BlockchainNode(Blockchain):
         if self.node_id == leader:
             print(f'[Node {self.node_id}] Selected as leader')
             self.form_block()
+        else:
+            # sending the selected leader 5 coins
+            stake = Transaction(self.node_id, leader, 5, self.counter, True)
+            self.counter += 1
+            for peer in self.get_validators():
+                self.ez_send(peer, stake)
+
 
     def form_block(self):
         # We assume that blocks are ordered.
@@ -240,3 +248,4 @@ class BlockchainNode(Blockchain):
         if len(self.block_votes[payload.block_hash]) >= 2 * (len(self.get_validators()) + 1) / 3:
             self.finalize_block(block)
             self.block_votes.pop(payload.block_hash)
+

@@ -37,7 +37,7 @@ if __name__ == '__main__':
             if args.algorithm == "election":
                 connections[i] = [(i+1) % args.num_nodes, (i-1) % args.num_nodes]
 
-            # Create a fully connected topology
+            # Create a connected topology of different gossip degree
             if args.algorithm == "blockchain":
                 if i < 5:
                     connections[i] = [j for j in range(args.num_nodes) if j != i]
